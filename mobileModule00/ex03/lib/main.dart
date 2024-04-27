@@ -20,6 +20,7 @@ class CalculatorPage extends StatefulWidget {
 class _CalculatorPageState extends State<CalculatorPage> {
   // 文字のstackを宣言
   List<String> elements = [];
+  String elementAnswer = '';
   var intValue = Random().nextInt(10);
   bool answerFlag = false;
 
@@ -29,6 +30,20 @@ class _CalculatorPageState extends State<CalculatorPage> {
       return '0';
     }
     return elements.join();
+  }
+
+  String _getExpression() {
+    if (elements.isEmpty) {
+      return '0';
+    }
+    return elements.join();
+  }
+
+  String _getAnswer() {
+    if (elementAnswer == '') {
+      return '0';
+    }
+    return elementAnswer;
   }
 
   void _onPressed(String value) {
@@ -41,12 +56,24 @@ class _CalculatorPageState extends State<CalculatorPage> {
     // stackに保存
     if (value == 'C') {
       if (elements.isNotEmpty) {
-        elements.removeLast();
+        // lastの文字列の最後の1文字を削除
+        elements[elements.length - 1] = elements[elements.length - 1].substring(0, elements[elements.length - 1].length - 1);
+        if (elements[elements.length - 1] == '') {
+          elements.removeAt(elements.length - 1);
+        }
       }
     } else if (value == 'AC') {
+      elementAnswer = '';
       elements.clear();
     } else if (value == '=') {
       calculate();
+    } else if (value == '+' || value == '-' || value == 'x' || value == '/') {
+      // +, -, x, /が連続して入力された場合は無視
+      if (elements.isNotEmpty && RegExp(r'[x/+-]').hasMatch(elements[elements.length - 1])) {
+        return;
+      } else {
+        elements.add(value);
+      }
     } else {
       elements.add(value);
     }
@@ -78,6 +105,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
       } else if (element == '-' && (preparedElements.isEmpty || RegExp(r'[x/+]').hasMatch(preparedElements.last))) {
         // 負の符号の場合（リストが空、または直前の要素が演算子の場合）
         if (currentNumber.isNotEmpty) {
+          // +を追加してから負の数値を追加
           preparedElements.add(currentNumber); // 既存の数値を追加
           currentNumber = ''; // リセット
         }
@@ -99,14 +127,25 @@ class _CalculatorPageState extends State<CalculatorPage> {
   }
 
   void calculate() {
-    if (elements.length < 3) {
+    if (elements.length < 1) {
       return;
     }
 
     // 乗算と除算を先に計算
     List<String> newElements = [];
-    double temp = double.parse(elements[0]);
+    List<String> newElements2 = [];
 
+    for (int i = 0; i < elements.length; i++) {
+      // 数値が連続している場合は+を追加
+      if (i > 0 && RegExp(r'[0-9.]').hasMatch(elements[i]) && RegExp(r'[0-9.]').hasMatch(elements[i - 1])) {
+        newElements2.add('+');
+      }
+      newElements2.add(elements[i]);
+    }
+
+    elements = newElements2;
+
+    double temp = double.parse(elements[0]);
     for (int i = 1; i < elements.length; i += 2) {
       switch (elements[i]) {
         case 'x':
@@ -147,7 +186,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
 
     // 結果を更新
     elements.clear();
-    elements.add(answer.toString());
+    elementAnswer = answer.toString();
     setState(() {});
     answerFlag = true;
   }
@@ -165,10 +204,16 @@ class _CalculatorPageState extends State<CalculatorPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           Container(
-            padding: EdgeInsets.all(20),
             alignment: Alignment.topRight,
             child: Text(
-              _stackToString(),
+              _getExpression(),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Container(
+            alignment: Alignment.topRight,
+            child: Text(
+              _getAnswer(),
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ),
