@@ -47,7 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
 
                 setState(() {
-                  _displayedText = 'Tokyo';
+                  _displayedText = 'Geolocation';
                 });
               },
             ),
