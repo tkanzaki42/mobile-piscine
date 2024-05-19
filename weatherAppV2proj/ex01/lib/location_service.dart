@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LocationService {
   static Future<String> getCurrentLocation() async {
@@ -32,7 +33,8 @@ class LocationService {
   }
 
   static Future<String> getCityName(double latitude, double longitude) async {
-    final apiKey = 'AIzaSyA9v4DCv3P-r8Omlh7ESXCUrpV-NZIO6Lc';  // ここにGoogle APIキーを入れてください
+    // dotenvを使ってAPIキーを取得
+    final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
     final url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latitude,$longitude&key=$apiKey';
 
     final response = await http.get(Uri.parse(url));
