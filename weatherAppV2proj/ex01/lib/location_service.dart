@@ -8,7 +8,6 @@ class LocationService {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // 位置情報サービスが有効かどうか
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return '位置情報サービスが無効です。';
@@ -26,18 +25,17 @@ class LocationService {
       return '位置情報の権限が永久に拒否されました。権限をリクエストすることができません。';
     }
 
-    // ここに到達した場合、権限が付与されており、デバイスの位置情報にアクセスできます。
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
     return await getCityName(position.latitude, position.longitude);
   }
 
   static Future<String> getCityName(double latitude, double longitude) async {
-    // dotenvを使ってAPIキーを取得
-    final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
-    final url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latitude,$longitude&key=$apiKey';
+    final apiKey = dotenv.env['GOOGLE_API_KEY'];
+    final url = Uri.parse('https://maps.googleapis.com/maps/api/geocode/json?latlng=$latitude,$longitude&key=$apiKey');
 
-    final response = await http.get(Uri.parse(url));
+    final response = await http.get(url);
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data['results'] != null && data['results'].isNotEmpty) {
@@ -49,5 +47,21 @@ class LocationService {
       }
     }
     return '都市名が見つかりませんでした';
+  }
+
+  static Future<List<String>> getSuggestions(String query) async {
+    final apiKey = dotenv.env['GOOGLE_API_KEY'];
+    final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&types=(cities)&key=$apiKey');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['predictions'] != null && data['predictions'].isNotEmpty) {
+        return List<String>.from(data['predictions'].map((prediction) => prediction['description']));
+      }
+    }
+    return [];
   }
 }
