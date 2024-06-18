@@ -14,7 +14,6 @@ dependencies:
   cupertino_icons: ^1.0.6
   geolocator: ^12.0.0
   http: ^1.2.1
-  flutter_dotenv: ^5.1.0
   flutter_typeahead: ^5.2.0
 
 dev_dependencies:
@@ -25,5 +24,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - .env
+

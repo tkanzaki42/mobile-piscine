@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LocationService {
   static Future<String> getCurrentLocation() async {
@@ -31,35 +30,36 @@ class LocationService {
   }
 
   static Future<String> getCityName(double latitude, double longitude) async {
-    final apiKey = dotenv.env['GOOGLE_API_KEY'];
-    final url = Uri.parse('https://maps.googleapis.com/maps/api/geocode/json?latlng=$latitude,$longitude&key=$apiKey');
+    final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?lat=$latitude&lon=$longitude&format=json&zoom=10');
 
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      if (data['results'] != null && data['results'].isNotEmpty) {
-        for (var component in data['results'][0]['address_components']) {
-          if (component['types'].contains('locality')) {
-            return component['long_name'];
-          }
-        }
+      if (data['display_name'] != null) {
+        return data['display_name'];
       }
     }
     return '都市名が見つかりませんでした';
   }
 
   static Future<List<String>> getSuggestions(String query) async {
-    final apiKey = dotenv.env['GOOGLE_API_KEY'];
     final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&types=(cities)&key=$apiKey');
+        'https://geocoding-api.open-meteo.com/v1/search?name=$query&count=10&language=en&format=json');
 
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      if (data['predictions'] != null && data['predictions'].isNotEmpty) {
-        return List<String>.from(data['predictions'].map((prediction) => prediction['description']));
+      if (data['results'] != null) {
+        List<String> suggestions = [];
+        for (var result in data['results']) {
+          final city =
+              await getCityName(result['latitude'], result['longitude']);
+          suggestions.add(city);
+        }
+        return suggestions;
       }
     }
     return [];
